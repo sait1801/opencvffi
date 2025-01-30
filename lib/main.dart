@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'EverPixel Demo',
         theme: ThemeData(primarySwatch: Colors.blue),
         home: const HomeScreen(),

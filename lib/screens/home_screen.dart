@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:before_after/before_after.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -47,10 +48,35 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (provider.selectedImagePath != null)
-                Image.file(
-                    File(provider.selectedImagePath!)), // Update to File image
-
+              if (provider.selectedImagePath != null &&
+                  !provider.showComparison)
+                Image.file(File(provider.selectedImagePath!)),
+              if (provider.selectedImagePath != null &&
+                  provider.showComparison &&
+                  provider.previousVersion != null)
+                BeforeAfter(
+                  value: provider.beforeAfterValue,
+                  before: Image.file(File(provider.previousVersion!)),
+                  after: Image.file(File(provider.selectedImagePath!)),
+                  onValueChanged: (value) {
+                    provider.changeBeforeAfterValue(value);
+                  },
+                ),
+              if (provider.showComparison)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _imageController.acceptNewVersion,
+                      child: const Text('Accept Changes'),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _imageController.rollback,
+                      child: const Text('Cancel'),
+                    ),
+                  ],
+                ),
               ElevatedButton(
                 onPressed: () async {
                   final XFile? image = await _picker.pickImage(
@@ -63,13 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: const Text('Select From Gallery'),
               ),
-
               ElevatedButton(
                 onPressed:
                     provider.isLoading ? null : _imageController.convertToGray,
                 child: const Text('Grayscale'),
               ),
-
               ElevatedButton(
                 onPressed: () {
                   final version = _imageController.getOpenCVVersion();

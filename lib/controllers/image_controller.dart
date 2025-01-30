@@ -15,12 +15,24 @@ class ImageController {
     if (input == null) return;
 
     _imageAppProvider.setLoading(true);
+    _imageAppProvider.setShowComparison(true);
 
     final output = await _generateOutputPath();
     _imageService.convertImageToGrayImage(input, output);
 
     _imageAppProvider.setSelectedImage(output);
     _imageAppProvider.setLoading(false);
+  }
+
+  void acceptNewVersion() {
+    if (_imageAppProvider.selectedImagePath != null) {
+      _imageAppProvider.addNewVersion(_imageAppProvider.selectedImagePath!);
+      _imageAppProvider.setShowComparison(false);
+    }
+  }
+
+  void rollback() {
+    _imageAppProvider.rollbackToPreviousVersion();
   }
 
   String getOpenCVVersion() => _imageService.getOpenCVVersion();
