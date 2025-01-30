@@ -60,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   after: Image.file(File(provider.selectedImagePath!)),
                   onValueChanged: (value) {
                     provider.changeBeforeAfterValue(value);
+                    provider.setShowComparison(true);
                   },
                 ),
               if (provider.showComparison)
@@ -73,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 16),
                     ElevatedButton(
                       onPressed: _imageController.rollback,
-                      child: const Text('Cancel'),
+                      child: const Text('Rollback'),
                     ),
                   ],
                 ),
