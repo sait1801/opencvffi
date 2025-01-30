@@ -1,5 +1,6 @@
 import 'package:opencvffi/providers/image_provider.dart';
 import 'package:opencvffi/services/image_service.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// The controller orchestrates between the services and providers.
 /// The UI (screens) will call methods from this controller for business logic.
@@ -9,20 +10,23 @@ class ImageController {
 
   ImageController(this._imageService, this._imageAppProvider);
 
-  /// Example method to show how the UI calls the controller to apply a filter.
-  Future<void> applyFilter(String filterType) async {
-    final currentPath = _imageAppProvider.selectedImagePath;
-    if (currentPath == null) return;
+  Future<void> convertToGray() async {
+    final input = _imageAppProvider.selectedImagePath;
+    if (input == null) return;
 
     _imageAppProvider.setLoading(true);
 
-    // Apply the filter using the service
-    final resultPath =
-        await _imageService.applyMockFilter(currentPath, filterType);
+    final output = await _generateOutputPath();
+    _imageService.convertImageToGrayImage(input, output);
 
-    // Save the new state
-    _imageAppProvider.setSelectedImage(resultPath);
-
+    _imageAppProvider.setSelectedImage(output);
     _imageAppProvider.setLoading(false);
+  }
+
+  String getOpenCVVersion() => _imageService.getOpenCVVersion();
+
+  Future<String> _generateOutputPath() async {
+    final dir = await getTemporaryDirectory();
+    return '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
   }
 }

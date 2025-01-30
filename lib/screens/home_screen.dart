@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/image_provider.dart';
@@ -14,6 +18,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late ImageController _imageController;
+  final ImagePicker _picker = ImagePicker();
+
+  // Add temporary path generation
+  Future<String> _generateOutputPath() async {
+    final dir = await getTemporaryDirectory();
+    return '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+  }
 
   @override
   void initState() {
@@ -36,49 +47,38 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Display the selected image (mock display here)
               if (provider.selectedImagePath != null)
-                Image.asset(provider.selectedImagePath!),
-              const SizedBox(height: 20),
+                Image.file(
+                    File(provider.selectedImagePath!)), // Update to File image
 
-              // Button to simulate selecting an image
+              ElevatedButton(
+                onPressed: () async {
+                  final XFile? image = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                    imageQuality: 80,
+                  );
+                  if (image != null) {
+                    provider.setSelectedImage(image.path);
+                  }
+                },
+                child: const Text('Select From Gallery'),
+              ),
+
+              ElevatedButton(
+                onPressed:
+                    provider.isLoading ? null : _imageController.convertToGray,
+                child: const Text('Grayscale'),
+              ),
+
               ElevatedButton(
                 onPressed: () {
-                  // For this demo, we pretend we select an image from the gallery.
-                  provider.setSelectedImage("assets/images/baydirman.jpeg");
+                  final version = _imageController.getOpenCVVersion();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('OpenCV $version')),
+                  );
                 },
-                child: const Text('Select Mock Image'),
+                child: const Text('Get Version'),
               ),
-              const SizedBox(height: 20),
-
-              // Buttons to apply filters
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: provider.isLoading
-                        ? null
-                        : () => _imageController.applyFilter("grayscale"),
-                    child: const Text('Apply Grayscale'),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: provider.isLoading
-                        ? null
-                        : () => _imageController.applyFilter("blur"),
-                    child: const Text('Apply Blur'),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 10),
-
-              // Loading indicator
-              if (provider.isLoading)
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                ),
             ],
           ),
         ),

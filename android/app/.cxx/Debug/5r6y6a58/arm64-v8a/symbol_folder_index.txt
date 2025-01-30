@@ -1,0 +1,1 @@
+C:\Users\sbura\development\opencvffi\build\app\intermediates\cxx\Debug\5r6y6a58\obj\arm64-v8a

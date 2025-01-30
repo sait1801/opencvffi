@@ -1,15 +1,33 @@
-// This service class is responsible for API calls, FFI calls, etc.
-// In a real implementation, you might import dart:ffi and relevant C++ libraries for image processing.
+import 'dart:ffi';
+import 'dart:io';
+
+import 'package:ffi/ffi.dart';
 
 class ImageService {
-  /// Example: Mock method simulating an FFI call to a C++ library
-  /// to apply a grayscale filter to the image.
-  /// Here we simply simulate a delay.
-  Future<String> applyMockFilter(String imagePath, String filterType) async {
-    // In real usage, call your native C++ method through FFI
-    await Future.delayed(const Duration(seconds: 1));
+  final DynamicLibrary _lib;
+  late final Pointer<Utf8> Function() _getOpenCVVersion;
+  late final void Function(Pointer<Utf8>, Pointer<Utf8>)
+      _convertImageToGrayImage;
 
-    // Return a "processed image path" (or buffer/pointer, etc.)
-    return "imagePath−$imagePath−$filterType−filtered";
+  ImageService()
+      : _lib = Platform.isAndroid
+            ? DynamicLibrary.open('libmy_functions.so')
+            : DynamicLibrary.process() {
+    _getOpenCVVersion = _lib
+        .lookup<NativeFunction<Pointer<Utf8> Function()>>('getOpenCVVersion')
+        .asFunction();
+    _convertImageToGrayImage = _lib
+        .lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>)>>(
+            'convertImageToGrayImage')
+        .asFunction();
+  }
+
+  String getOpenCVVersion() {
+    return _getOpenCVVersion().cast<Utf8>().toDartString();
+  }
+
+  void convertImageToGrayImage(String inputPath, String outputPath) {
+    _convertImageToGrayImage(
+        inputPath.toNativeUtf8(), outputPath.toNativeUtf8());
   }
 }
