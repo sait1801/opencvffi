@@ -38,7 +38,6 @@ EverPixel is a cross-platform image processing application built with Flutter an
 ### Prerequisites
 
 - Flutter SDK (latest stable)
-- OpenCV 4.x
 - C++ compiler
 - CMake
 
@@ -47,8 +46,8 @@ EverPixel is a cross-platform image processing application built with Flutter an
 1. **Clone Repository**
 
 ```bash
-git clone https://github.com/yourusername/everpixel.git
-cd everpixel
+git clone https://github.com/sait1801/opencvffi.git
+cd opencvffi
 ```
 
 2. **Package Installation**
