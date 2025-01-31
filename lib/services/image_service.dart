@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
+import 'package:http/http.dart' as http;
 
 class ImageService {
   final DynamicLibrary _lib;
+  static const String baseUrl = 'http://192.168.0.5:5000';
 
   // Existing function pointers
   late final Pointer<Utf8> Function() _getOpenCVVersion;
@@ -93,5 +96,122 @@ class ImageService {
 
   void applySobelEdge(String inputPath, String outputPath) {
     _applySobelEdge(inputPath.toNativeUtf8(), outputPath.toNativeUtf8());
+  }
+
+  // Backend versions of the functions
+  Future<String> convertImageToGrayImageBackend(String inputPath) async {
+    final bytes = await File(inputPath).readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    print("Sending request to backend");
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/process_image'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'image': base64Image, 'operation': 'grayscale'}),
+    );
+
+    print("GOT  Response from backend: ${response.statusCode}");
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return responseData['processed_image'];
+    }
+    throw Exception('Failed to process image');
+  }
+
+  Future<String> applyGaussianBlurBackend(
+      String inputPath, int kernelSize) async {
+    final bytes = await File(inputPath).readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/process_image'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'image': base64Image,
+        'operation': 'gaussian_blur',
+        'params': {'kernel_size': kernelSize}
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return responseData['processed_image'];
+    }
+    throw Exception('Failed to process image');
+  }
+
+  Future<String> applySharpenBackend(String inputPath) async {
+    final bytes = await File(inputPath).readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/process_image'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'image': base64Image, 'operation': 'sharpen'}),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return responseData['processed_image'];
+    }
+    throw Exception('Failed to process image');
+  }
+
+  Future<String> detectEdgesBackend(String inputPath) async {
+    final bytes = await File(inputPath).readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/process_image'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'image': base64Image, 'operation': 'edge_detection'}),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return responseData['processed_image'];
+    }
+    throw Exception('Failed to process image');
+  }
+
+  Future<String> applyMedianBlurBackend(
+      String inputPath, int kernelSize) async {
+    final bytes = await File(inputPath).readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/process_image'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'image': base64Image,
+        'operation': 'median_blur',
+        'params': {'kernel_size': kernelSize}
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return responseData['processed_image'];
+    }
+    throw Exception('Failed to process image');
+  }
+
+  Future<String> applySobelEdgeBackend(String inputPath) async {
+    final bytes = await File(inputPath).readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/process_image'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'image': base64Image, 'operation': 'sobel_edge'}),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return responseData['processed_image'];
+    }
+    throw Exception('Failed to process image');
   }
 }

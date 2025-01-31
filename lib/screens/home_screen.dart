@@ -242,6 +242,50 @@ class _HomeScreenState extends State<HomeScreen> {
                       text: 'Sobel Edge',
                       isPrimary: false,
                     ),
+                    _buildStylizedButton(
+                      onPressed: provider.isLoading
+                          ? null
+                          : _imageController.convertToGrayBackend,
+                      text: 'Grayscale w/ API',
+                      isPrimary: false,
+                    ),
+                    _buildStylizedButton(
+                      onPressed: provider.isLoading
+                          ? null
+                          : () => _imageController.applyGaussianBlurBackend(
+                              kernelSize: 5),
+                      text: 'Blur w/ API',
+                      isPrimary: false,
+                    ),
+                    _buildStylizedButton(
+                      onPressed: provider.isLoading
+                          ? null
+                          : _imageController.applySharpenBackend,
+                      text: 'Sharpen w/ API',
+                      isPrimary: false,
+                    ),
+                    _buildStylizedButton(
+                      onPressed: provider.isLoading
+                          ? null
+                          : _imageController.detectEdgesBackend,
+                      text: 'Detect Edges w/ API',
+                      isPrimary: false,
+                    ),
+                    _buildStylizedButton(
+                      onPressed: provider.isLoading
+                          ? null
+                          : () => _imageController.applyMedianBlurBackend(
+                              kernelSize: 3),
+                      text: 'Median Blur w/ API',
+                      isPrimary: false,
+                    ),
+                    _buildStylizedButton(
+                      onPressed: provider.isLoading
+                          ? null
+                          : _imageController.applySobelEdgeBackend,
+                      text: 'Sobel Edge w/ API',
+                      isPrimary: false,
+                    ),
                   ],
                 ],
               ),
