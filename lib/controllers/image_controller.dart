@@ -2,8 +2,6 @@ import 'package:opencvffi/providers/image_provider.dart';
 import 'package:opencvffi/services/image_service.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// The controller orchestrates between the services and providers.
-/// The UI (screens) will call methods from this controller for business logic.
 class ImageController {
   final ImageService _imageService;
   final ImageAppProvider _imageAppProvider;
@@ -18,9 +16,99 @@ class ImageController {
 
     final output = await _generateOutputPath();
     _imageService.convertImageToGrayImage(input, output);
+    _imageAppProvider.addNewVersion(output);
 
-    _imageAppProvider.setSelectedImage(output);
+    // Store the current image as previous version for comparison
+    _imageAppProvider.setTempPreview(output);
+    _imageAppProvider.setShowComparison(true);
     _imageAppProvider.setLoading(false);
+  }
+
+  // New image processing methods
+  Future<void> applyGaussianBlur({int kernelSize = 5}) async {
+    final input = _imageAppProvider.selectedImagePath;
+    if (input == null) return;
+
+    _imageAppProvider.setLoading(true);
+
+    final output = await _generateOutputPath();
+    _imageService.applyGaussianBlur(input, output, kernelSize);
+    _imageAppProvider.addNewVersion(output);
+
+    _imageAppProvider.setTempPreview(output);
+    _imageAppProvider.setShowComparison(true);
+    _imageAppProvider.setLoading(false);
+  }
+
+  Future<void> applySharpen() async {
+    final input = _imageAppProvider.selectedImagePath;
+    if (input == null) return;
+
+    _imageAppProvider.setLoading(true);
+
+    final output = await _generateOutputPath();
+    _imageService.applySharpen(input, output);
+    _imageAppProvider.addNewVersion(output);
+
+    _imageAppProvider.setTempPreview(output);
+    _imageAppProvider.setShowComparison(true);
+    _imageAppProvider.setLoading(false);
+  }
+
+  Future<void> detectEdges() async {
+    final input = _imageAppProvider.selectedImagePath;
+    if (input == null) return;
+
+    _imageAppProvider.setLoading(true);
+
+    final output = await _generateOutputPath();
+    _imageService.detectEdges(input, output);
+    _imageAppProvider.addNewVersion(output);
+
+    _imageAppProvider.setTempPreview(output);
+    _imageAppProvider.setShowComparison(true);
+    _imageAppProvider.setLoading(false);
+  }
+
+  Future<void> applyMedianBlur({int kernelSize = 3}) async {
+    final input = _imageAppProvider.selectedImagePath;
+    if (input == null) return;
+
+    _imageAppProvider.setLoading(true);
+
+    final output = await _generateOutputPath();
+    _imageService.applyMedianBlur(input, output, kernelSize);
+    _imageAppProvider.addNewVersion(output);
+
+    _imageAppProvider.setTempPreview(output);
+    _imageAppProvider.setShowComparison(true);
+    _imageAppProvider.setLoading(false);
+  }
+
+  Future<void> applySobelEdge() async {
+    final input = _imageAppProvider.selectedImagePath;
+    if (input == null) return;
+
+    _imageAppProvider.setLoading(true);
+
+    final output = await _generateOutputPath();
+    _imageService.applySobelEdge(input, output);
+    _imageAppProvider.addNewVersion(output);
+
+    _imageAppProvider.setTempPreview(output);
+    _imageAppProvider.setShowComparison(true);
+    _imageAppProvider.setLoading(false);
+  }
+
+  void acceptNewVersion() {
+    if (_imageAppProvider.selectedImagePath != null) {
+      _imageAppProvider.addNewVersion(_imageAppProvider.selectedImagePath!);
+      _imageAppProvider.setShowComparison(false);
+    }
+  }
+
+  void rollback() {
+    _imageAppProvider.rollbackToPreviousVersion();
   }
 
   String getOpenCVVersion() => _imageService.getOpenCVVersion();

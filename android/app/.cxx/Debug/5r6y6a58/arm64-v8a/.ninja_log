@@ -1,3 +1,5 @@
 # ninja log v5
 1	12718	7599458506751832	CMakeFiles/my_functions.dir/C_/Users/sbura/development/opencvffi/open_cv/my_functions.cpp.o	8048e573d6a359fd
 12741	12979	7599458509684712	C:/Users/sbura/development/opencvffi/build/app/intermediates/cxx/Debug/5r6y6a58/obj/arm64-v8a/libmy_functions.so	25695083d6726a7c
+44	12220	7600142892702449	CMakeFiles/my_functions.dir/C_/Users/sbura/development/opencvffi/open_cv/my_functions.cpp.o	8048e573d6a359fd
+12222	12717	7600142897788941	C:/Users/sbura/development/opencvffi/build/app/intermediates/cxx/Debug/5r6y6a58/obj/arm64-v8a/libmy_functions.so	25695083d6726a7c
