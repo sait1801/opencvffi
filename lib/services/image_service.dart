@@ -8,12 +8,10 @@ class ImageService {
   final DynamicLibrary _lib;
   static const String baseUrl = 'http://192.168.0.5:5000';
 
-  // Existing function pointers
+  // Existing FFI function pointers
   late final Pointer<Utf8> Function() _getOpenCVVersion;
   late final void Function(Pointer<Utf8>, Pointer<Utf8>)
       _convertImageToGrayImage;
-
-  // New function pointers
   late final void Function(Pointer<Utf8>, Pointer<Utf8>, int)
       _applyGaussianBlur;
   late final void Function(Pointer<Utf8>, Pointer<Utf8>) _applySharpen;
@@ -25,7 +23,7 @@ class ImageService {
       : _lib = Platform.isAndroid
             ? DynamicLibrary.open('libmy_functions.so')
             : DynamicLibrary.process() {
-    // Initialize existing functions
+    // Initialize existing FFI functions
     _getOpenCVVersion = _lib
         .lookup<NativeFunction<Pointer<Utf8> Function()>>('getOpenCVVersion')
         .asFunction();
@@ -33,39 +31,33 @@ class ImageService {
         .lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>)>>(
             'convertImageToGrayImage')
         .asFunction();
-
-    // Initialize new functions
     _applyGaussianBlur = _lib
         .lookup<
             NativeFunction<
                 Void Function(
                     Pointer<Utf8>, Pointer<Utf8>, Int32)>>('applyGaussianBlur')
         .asFunction();
-
     _applySharpen = _lib
         .lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>)>>(
             'applySharpen')
         .asFunction();
-
     _detectEdges = _lib
         .lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>)>>(
             'detectEdges')
         .asFunction();
-
     _applyMedianBlur = _lib
         .lookup<
             NativeFunction<
                 Void Function(
                     Pointer<Utf8>, Pointer<Utf8>, Int32)>>('applyMedianBlur')
         .asFunction();
-
     _applySobelEdge = _lib
         .lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>)>>(
             'applySobelEdge')
         .asFunction();
   }
 
-  // Existing methods
+  // Existing FFI methods
   String getOpenCVVersion() {
     return _getOpenCVVersion().cast<Utf8>().toDartString();
   }
@@ -75,7 +67,6 @@ class ImageService {
         inputPath.toNativeUtf8(), outputPath.toNativeUtf8());
   }
 
-  // New methods
   void applyGaussianBlur(String inputPath, String outputPath, int kernelSize) {
     _applyGaussianBlur(
         inputPath.toNativeUtf8(), outputPath.toNativeUtf8(), kernelSize);
@@ -98,120 +89,92 @@ class ImageService {
     _applySobelEdge(inputPath.toNativeUtf8(), outputPath.toNativeUtf8());
   }
 
-  // Backend versions of the functions
-  Future<String> convertImageToGrayImageBackend(String inputPath) async {
-    final bytes = await File(inputPath).readAsBytes();
-    final base64Image = base64Encode(bytes);
+  // New backend API methods
+  Future<String?> processImage(String imagePath, String operation,
+      {Map<String, dynamic>? params}) async {
+    try {
+      final File imageFile = File(imagePath);
+      final List<int> imageBytes = await imageFile.readAsBytes();
+      final String base64Image = base64Encode(imageBytes);
 
-    print("Sending request to backend");
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/process_image'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'image': base64Image, 'operation': 'grayscale'}),
-    );
-
-    print("GOT  Response from backend: ${response.statusCode}");
-
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      return responseData['processed_image'];
-    }
-    throw Exception('Failed to process image');
-  }
-
-  Future<String> applyGaussianBlurBackend(
-      String inputPath, int kernelSize) async {
-    final bytes = await File(inputPath).readAsBytes();
-    final base64Image = base64Encode(bytes);
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/process_image'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+      final Map<String, dynamic> requestBody = {
         'image': base64Image,
-        'operation': 'gaussian_blur',
-        'params': {'kernel_size': kernelSize}
-      }),
-    );
+        'operation': operation,
+        if (params != null) 'params': params,
+      };
 
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      return responseData['processed_image'];
+      final client = http.Client();
+      try {
+        final response = await client
+            .post(
+              Uri.parse('$baseUrl/process_image'),
+              headers: {
+                'Content-Type': 'application/json',
+                "Keep-Alive": "timeout=5, max=1",
+                'Accept': 'application/json',
+              },
+              body: jsonEncode(requestBody),
+            )
+            .timeout(const Duration(seconds: 30));
+
+        if (response.statusCode == 200) {
+          // Convert response bytes to string then decode JSON
+          final String responseString = utf8.decode(response.bodyBytes);
+          final Map<String, dynamic> responseData = jsonDecode(responseString);
+
+          if (responseData['status'] == 'success') {
+            return responseData['processed_image'];
+          } else {
+            throw Exception('Processing failed: ${responseData['error']}');
+          }
+        } else {
+          throw Exception('Failed to process image: ${response.statusCode}');
+        }
+      } finally {
+        client.close();
+      }
+    } catch (e) {
+      print('Error processing image: $e');
+      return null;
     }
-    throw Exception('Failed to process image');
   }
 
-  Future<String> applySharpenBackend(String inputPath) async {
-    final bytes = await File(inputPath).readAsBytes();
-    final base64Image = base64Encode(bytes);
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/process_image'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'image': base64Image, 'operation': 'sharpen'}),
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      return responseData['processed_image'];
-    }
-    throw Exception('Failed to process image');
+  // Backend API convenience methods
+  Future<String?> applyEdgeDetectionBackend(String imagePath) async {
+    return processImage(imagePath, 'edge_detection');
   }
 
-  Future<String> detectEdgesBackend(String inputPath) async {
-    final bytes = await File(inputPath).readAsBytes();
-    final base64Image = base64Encode(bytes);
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/process_image'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'image': base64Image, 'operation': 'edge_detection'}),
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      return responseData['processed_image'];
-    }
-    throw Exception('Failed to process image');
+  Future<String?> applyGaussianBlurBackend(String imagePath,
+      {int kernelSize = 5}) async {
+    return processImage(imagePath, 'gaussian_blur',
+        params: {'kernel_size': kernelSize});
   }
 
-  Future<String> applyMedianBlurBackend(
-      String inputPath, int kernelSize) async {
-    final bytes = await File(inputPath).readAsBytes();
-    final base64Image = base64Encode(bytes);
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/process_image'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'image': base64Image,
-        'operation': 'median_blur',
-        'params': {'kernel_size': kernelSize}
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      return responseData['processed_image'];
-    }
-    throw Exception('Failed to process image');
+  Future<String?> applySharpenBackend(String imagePath) async {
+    return processImage(imagePath, 'sharpen');
   }
 
-  Future<String> applySobelEdgeBackend(String inputPath) async {
-    final bytes = await File(inputPath).readAsBytes();
-    final base64Image = base64Encode(bytes);
+  Future<String?> convertToGrayscaleBackend(String imagePath) async {
+    return processImage(imagePath, 'grayscale');
+  }
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/process_image'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'image': base64Image, 'operation': 'sobel_edge'}),
-    );
+  Future<String?> applyMedianBlurBackend(String imagePath,
+      {int kernelSize = 3}) async {
+    return processImage(imagePath, 'median_blur',
+        params: {'kernel_size': kernelSize});
+  }
 
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      return responseData['processed_image'];
+  Future<String?> applySobelEdgeBackend(String imagePath) async {
+    return processImage(imagePath, 'sobel_edge');
+  }
+
+  // Helper method to save base64 image
+  Future<void> saveBase64Image(String base64String, String outputPath) async {
+    try {
+      final bytes = base64Decode(base64String);
+      await File(outputPath).writeAsBytes(bytes);
+    } catch (e) {
+      print('Error saving image: $e');
     }
-    throw Exception('Failed to process image');
   }
 }

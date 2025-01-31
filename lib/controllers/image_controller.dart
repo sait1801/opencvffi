@@ -129,57 +129,14 @@ class ImageController {
 
     try {
       final base64Response =
-          await _imageService.convertImageToGrayImageBackend(input);
+          await _imageService.convertToGrayscaleBackend(input);
       print("Fİle GOT0: $base64Response");
 
       final output = await _generateOutputPath();
       print("Fİle GOT1: $output");
 
-      await File(output).writeAsBytes(base64Decode(base64Response));
+      await File(output).writeAsBytes(base64Decode(base64Response!));
       print("Fİle GOT2: $output");
-
-      _imageAppProvider.addNewVersion(output);
-      _imageAppProvider.setTempPreview(output);
-      _imageAppProvider.setShowComparison(true);
-    } catch (e) {
-      print('Error processing image: $e');
-    } finally {
-      _imageAppProvider.setLoading(false);
-    }
-  }
-
-  Future<void> applyGaussianBlurBackend({int kernelSize = 5}) async {
-    final input = _imageAppProvider.selectedImagePath;
-    if (input == null) return;
-
-    _imageAppProvider.setLoading(true);
-
-    try {
-      final base64Response =
-          await _imageService.applyGaussianBlurBackend(input, kernelSize);
-      final output = await _generateOutputPath();
-      await File(output).writeAsBytes(base64Decode(base64Response));
-
-      _imageAppProvider.addNewVersion(output);
-      _imageAppProvider.setTempPreview(output);
-      _imageAppProvider.setShowComparison(true);
-    } catch (e) {
-      print('Error processing image: $e');
-    } finally {
-      _imageAppProvider.setLoading(false);
-    }
-  }
-
-  Future<void> applySharpenBackend() async {
-    final input = _imageAppProvider.selectedImagePath;
-    if (input == null) return;
-
-    _imageAppProvider.setLoading(true);
-
-    try {
-      final base64Response = await _imageService.applySharpenBackend(input);
-      final output = await _generateOutputPath();
-      await File(output).writeAsBytes(base64Decode(base64Response));
 
       _imageAppProvider.addNewVersion(output);
       _imageAppProvider.setTempPreview(output);
@@ -198,52 +155,10 @@ class ImageController {
     _imageAppProvider.setLoading(true);
 
     try {
-      final base64Response = await _imageService.detectEdgesBackend(input);
-      final output = await _generateOutputPath();
-      await File(output).writeAsBytes(base64Decode(base64Response));
-
-      _imageAppProvider.addNewVersion(output);
-      _imageAppProvider.setTempPreview(output);
-      _imageAppProvider.setShowComparison(true);
-    } catch (e) {
-      print('Error processing image: $e');
-    } finally {
-      _imageAppProvider.setLoading(false);
-    }
-  }
-
-  Future<void> applyMedianBlurBackend({int kernelSize = 3}) async {
-    final input = _imageAppProvider.selectedImagePath;
-    if (input == null) return;
-
-    _imageAppProvider.setLoading(true);
-
-    try {
       final base64Response =
-          await _imageService.applyMedianBlurBackend(input, kernelSize);
+          await _imageService.applyEdgeDetectionBackend(input);
       final output = await _generateOutputPath();
-      await File(output).writeAsBytes(base64Decode(base64Response));
-
-      _imageAppProvider.addNewVersion(output);
-      _imageAppProvider.setTempPreview(output);
-      _imageAppProvider.setShowComparison(true);
-    } catch (e) {
-      print('Error processing image: $e');
-    } finally {
-      _imageAppProvider.setLoading(false);
-    }
-  }
-
-  Future<void> applySobelEdgeBackend() async {
-    final input = _imageAppProvider.selectedImagePath;
-    if (input == null) return;
-
-    _imageAppProvider.setLoading(true);
-
-    try {
-      final base64Response = await _imageService.applySobelEdgeBackend(input);
-      final output = await _generateOutputPath();
-      await File(output).writeAsBytes(base64Decode(base64Response));
+      await File(output).writeAsBytes(base64Decode(base64Response!));
 
       _imageAppProvider.addNewVersion(output);
       _imageAppProvider.setTempPreview(output);
