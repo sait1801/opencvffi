@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// This provider holds the state regarding the currently selected image
-/// and any filter that’s being applied.
 class ImageAppProvider extends ChangeNotifier {
   String? _selectedImagePath;
   bool _isLoading = false;
   List<String> _imageVersions = [];
   bool _showComparison = false;
+  double beforeAfterValue = 0.5;
 
   String? get selectedImagePath => _selectedImagePath;
   bool get isLoading => _isLoading;
@@ -16,13 +15,11 @@ class ImageAppProvider extends ChangeNotifier {
       ? _imageVersions[_imageVersions.length - 2]
       : null;
 
-  double beforeAfterValue = 0.5;
-
   void setSelectedImage(String path) {
     _selectedImagePath = path;
-    if (_imageVersions.isEmpty) {
-      _imageVersions.add(path);
-    }
+    beforeAfterValue = 0.5;
+    _imageVersions = [path];
+    _showComparison = false;
     notifyListeners();
   }
 
@@ -37,10 +34,17 @@ class ImageAppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setTempPreview(String path) {
+    _selectedImagePath = path;
+    notifyListeners();
+  }
+
   void rollbackToPreviousVersion() {
     if (_imageVersions.length > 1) {
       _imageVersions.removeLast();
       _selectedImagePath = _imageVersions.last;
+      print(_selectedImagePath);
+      _showComparison = false;
       notifyListeners();
     }
   }
