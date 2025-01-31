@@ -6,6 +6,7 @@ EverPixel is a cross-platform image processing application built with Flutter an
 
 ## Project Structure
 
+```bash
 ├── lib/
 │ ├── controllers/
 │ │ └── image_controller.dart # Image processing logic controller
@@ -17,6 +18,7 @@ EverPixel is a cross-platform image processing application built with Flutter an
 │ └── main.dart # Entry point
 ├── open_cv/
 │ └── my_functions.cpp # Native OpenCV implementations
+```
 
 ## Features
 
